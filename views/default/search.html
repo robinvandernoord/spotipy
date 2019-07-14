@@ -1,0 +1,74 @@
+{{extend 'layout.html'}}
+
+
+
+
+<script>
+    // get items that are already in playlist
+    let urlparts = window.location.href.split('?')[0].split('/');
+    const playlist_id = urlparts.pop() || urlparts.pop();  // handle potential trailing slash
+</script>
+<script type="text/html" id="spotify-result">
+    <div class="card">
+        <div class="card-image">
+            <figure class="image is-1by1">
+                <img data-src="albumImage" data-alt="album" />
+            </figure>
+        </div>
+        <div class="card-content">
+            <div class="media">
+                <div class="media-left">
+                    <figure class="image is-48x48">
+                        <img data-src="artistImage" data-alt="artist" />
+                    </figure>
+                </div>
+                <div class="media-content">
+                    <p class="title is-4" data-content="name"></p>
+                    <p class="subtitle is-6">
+                        <span data-content="artists"></span><br />
+                        (<i data-content="album"></i>)
+                    </p>
+                </div>
+            </div>
+
+        </div>
+
+        <footer class="card-footer">
+            <a href="#" class="card-footer-item add-to-list">Add to playlist</a>
+        </footer>
+
+    </div>
+</script>
+
+<div id="mySidenav" class="sidenav">
+    <a class="closebtn">&times;</a>
+    <div class="playlist">
+    </div>
+</div>
+
+<section class="section">
+    <div id="input">
+        <form id="searchform">
+            <div class="field">
+                <label class="label" for="songname">Song name</label>
+                <div class="control">
+                    <input class="input" type="text" id="songname" required placeholder="Huts" />
+                </div>
+            </div>
+            <button class="button is-primary">Search!</button>
+        </form>
+    </div>
+</section>
+<section class="section">
+    <div id="results" class="columns is-multiline">
+    </div>
+</section>
+
+{{block page_js}}
+<script>
+    // server-side variables
+    const TOKEN = '{{=token}}';
+    const POSTURL = '{{=URL('add_to_playlist')}}';
+</script>
+<script src="{{=staticjs('search.js')}}"></script>
+{{end page_js}}

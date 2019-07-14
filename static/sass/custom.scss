@@ -1,0 +1,21 @@
+.label {
+  color: white;
+}
+
+.footer {
+  padding: 3rem 1.5rem;
+}
+
+
+#notification-holder {
+  width: 25%;
+  position: fixed;
+  right: 20px;
+  top: 20px;
+  z-index: 9999;
+
+  .notification {
+    transition: position 1s linear;
+  }
+
+}

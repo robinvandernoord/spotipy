@@ -1,0 +1,10 @@
+errors/
+sessions/
+databases/
+node_modules/
+private/
+
+*.pyc
+package-lock.json
+progress.log
+.idea

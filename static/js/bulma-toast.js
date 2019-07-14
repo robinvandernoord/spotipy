@@ -1,0 +1,3 @@
+'use strict';$(function(){$('#notification-holder').on('click','.notification .delete',function(a){// e.target.parentNode.remove();
+var b=$(a.target.parentNode);remove_notification(b)})});function remove_notification(a){var b={visibility:'hidden',display:'block'};a.hasClass('is-removed')||(a.children().css(b),a.css(b).slideUp().addClass('is-removed'))}function notify(a){var b=1<arguments.length&&arguments[1]!==void 0?arguments[1]:'success',c=2<arguments.length&&arguments[2]!==void 0?arguments[2]:2e3,d=$('<div class="notification is-'+b+'">');d.loadTemplate('#notification-template',{content:a}),$('#notification-holder').append(d),setTimeout(function(){return remove_notification(d)},c)}
+//# sourceMappingURL=bulma-toast.js.map
