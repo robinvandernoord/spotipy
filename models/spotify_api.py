@@ -11,17 +11,15 @@ from urllib.parse import quote_plus as url_escape
 
 class Spotify:
     def __init__(self):
-        print('creating new instance')
         self.client_id = client_id = configuration.get('spotify.client_id')
-        self.client_secret = client_secret = configuration.get('spotify.client_secret')
+        self.client_secret = client_secret = configuration.get(
+            'spotify.client_secret')
 
         self.client = spotify.Client(client_id, client_secret)
         self.state = 'mybotuser'
         self.uri = 'http://localhost/spotipy/default/callback'
         self.user = None
         self.token = None
-
-    # spotify.User.from_code(client, 'somecode', redirect_uri='some://redirect', refresh=False)
 
     def generate_login_url(self):
         scopes = ['user-read-private',
@@ -42,14 +40,15 @@ class Spotify:
             "state": self.state,
         }
 
-        args = '&'.join([f"{k}={url_escape(v)}" for k, v in parameters.items()])
+        args = '&'.join(
+            [f"{k}={url_escape(v)}" for k, v in parameters.items()])
 
         return "https://accounts.spotify.com/authorize?" + args
 
     def generate_token(self, code, grant_type='authorization_code'):
-        print('querying for new token', grant_type)
         headers = {
-            'Authorization': 'Basic ' + b64(f"{self.client_id}:{self.client_secret}"),
+            'Authorization': 'Basic ' + b64(
+                f"{self.client_id}:{self.client_secret}"),
         }
 
         grant_type_key = 'code' if grant_type == 'authorization_code' else 'refresh_token'
@@ -60,23 +59,30 @@ class Spotify:
             'redirect_uri': self.uri,
         }
 
-        return requests.post('https://accounts.spotify.com/api/token', headers=headers, data=data).json()
+        return requests.post('https://accounts.spotify.com/api/token',
+                             headers=headers, data=data).json()
 
     def refresh(self):
-        print('refreshing token')
         query = db.auth_code.code_type == 'refresh_token'
-        refresh_token = db(query).select(orderby=~db.auth_code.id, limitby=(0, 1)).first()
-        auth_info = self.generate_token(refresh_token.code, grant_type='refresh_token')
+        refresh_token = db(query).select(orderby=~db.auth_code.id,
+                                         limitby=(0, 1)).first()
+        auth_info = self.generate_token(refresh_token.code,
+                                        grant_type='refresh_token')
         if not auth_info.get('error'):
-            db.auth_code.insert(code=auth_info['access_token'], code_type='access_token')
+            db.auth_code.insert(code=auth_info['access_token'],
+                                code_type='access_token')
             if auth_info.get('refresh_token'):
-                db.auth_code.insert(code=auth_info['refresh_token'], code_type='refresh_token')
+                db.auth_code.insert(code=auth_info['refresh_token'],
+                                    code_type='refresh_token')
             db.commit()
 
     def login(self):
-        print('logging in')
         query = db.auth_code.code_type == 'access_token'
-        token = db(query).select(orderby=~db.auth_code.id, limitby=(0, 1)).first()
+        token = db(query).select(orderby=~db.auth_code.id,
+                                 limitby=(0, 1)).first()
+        if not token:
+            # stop
+            return
         self.token = token.code
         try:
             self.user = spotify.User.from_token(self.client, self.token)
@@ -112,10 +118,18 @@ class Spotify:
 
 @cache('spotify', time_expire=3600, cache_model=cache.ram)
 def cachetest():
-    print('executing login etc')
     s_instance = Spotify()
     s_instance.login()
+    if not s_instance.token:
+        # token failed -> require auth
+        print('token failed -> require auth')
+        redirect(s_instance.generate_login_url())
     return s_instance
 
 
-s = cachetest()
+def require_spotify(f):
+    def wrapper():
+        request.spotify = cachetest()
+        return f()
+
+    return wrapper

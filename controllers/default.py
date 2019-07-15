@@ -6,8 +6,9 @@
 
 
 @get
-@s.require_login
+@require_spotify
 def index():
+
     return {
         'get auth': A(_href=URL('generate_auth')),
         'playlists': A(_href=URL('playlists')),
@@ -16,9 +17,9 @@ def index():
 
 
 @get
-@s.require_login
+@require_spotify
 def playlists():
-    s_user = s.user
+    s_user = request.spotify.user
 
     plists = s_user.get_playlists()
 
@@ -35,7 +36,7 @@ def playlists():
 
 
 @post
-@s.require_login
+@require_spotify
 def create_playlist():
     s_user = s.user
     pl_name = request.post_vars.name
@@ -45,9 +46,9 @@ def create_playlist():
 
 
 @post
-@s.require_login
+@require_spotify
 def add_to_playlist():
-    s_user = s.user
+    s_user = request.spotify.user
     playlist_id = Spotify.playlist(request.env.http_referer.split('?')[0].split('/')[-1])
     if request.post_vars.track_id:
         playlist = find((lambda pl: pl.uri == playlist_id), s_user.get_playlists())
@@ -67,9 +68,9 @@ def add_to_playlist():
 
 
 @get
-@s.require_login
+@require_spotify
 def search():
-    return dict(token=s.token)
+    return dict(token=request.spotify.token)
 
 
 @get
@@ -79,11 +80,15 @@ def reset_cache():
 
 
 @get
+@require_spotify
 def generate_auth():
-    return redirect(s.generate_login_url())
+    return redirect(request.spotify.generate_login_url())
 
 
 def callback():
+    # empty spotify so we can use the generate_token function
+    s = Spotify()
+    print('we are in callback')
     if request.vars.state == s.state:
         code = request.vars.code
         if not db(db.auth_code.code == code).count():
@@ -102,6 +107,8 @@ def callback():
         if auth_info.get('refresh_token'):
             db.auth_code.insert(code=auth_info['refresh_token'], code_type='refresh_token')
         db.commit()
+
+    notify.queue('sucessfully logged in!')
     redirect(URL('index'))
 
 
