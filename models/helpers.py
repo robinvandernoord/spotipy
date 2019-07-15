@@ -38,11 +38,10 @@ def get(f):
 
 # front-end
 
-# STATE = 'PROD'
-STATE = 'DEV'
+STATE = configuration.get('env.stage') or 'DEV'
 
 
 def staticjs(file):
     # create url for static file
-    ext = 'js' if STATE == 'PROD' else 'es6'
+    ext = 'js' if STATE.upper() == 'PROD' else 'es6'
     return URL('static', f'{ext}/{file}')
